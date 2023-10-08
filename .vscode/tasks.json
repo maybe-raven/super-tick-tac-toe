@@ -1,0 +1,50 @@
+{
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Clippy",
+      "type": "shell",
+      "command": "cargo",
+      "args": [
+        "clippy"
+      ],
+      "presentation": {
+        "panel": "dedicated"
+      },
+      "problemMatcher": [
+        "$rustc"
+      ]
+    },
+    {
+      "label": "Tailwind watch",
+      "type": "shell",
+      "group": "build",
+      "command": "./tailwindcss",
+      "args": [
+        "--watch",
+        "--config",
+        "./tailwind.config.js",
+        "--output",
+        "./app.css"
+      ],
+      "presentation": {
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "Trunk serve",
+      "type": "shell",
+      "group": "build",
+      "command": "trunk",
+      "args": [
+        "serve",
+        "--open"
+      ],
+      "presentation": {
+        "panel": "dedicated"
+      }
+    }
+  ]
+}
