@@ -1,16 +1,18 @@
-use yew::{classes, function_component, html, Classes, Html, Properties};
+use yew::{classes, function_component, html, Callback, Classes, Html, MouseEvent, Properties};
 
 use crate::types::{GridIndex, Player, Tile};
 
-#[derive(Clone, PartialEq, Eq, Properties)]
+#[derive(Clone, PartialEq, Properties)]
 pub(crate) struct Props {
     pub(crate) index: GridIndex,
     pub(crate) tile: Tile,
+    pub(crate) onclick: Callback<MouseEvent>,
+    pub(crate) disabled: bool,
 }
 
 impl Props {
     fn is_interactive(&self) -> bool {
-        matches!(self.tile, Tile::Unmarked)
+        (!self.disabled) && matches!(self.tile, Tile::Unmarked)
     }
 }
 
@@ -25,7 +27,7 @@ pub(crate) fn tile_div(props: &Props) -> Html {
     );
 
     html! {
-        <div class={css}>
+        <div class={css} onclick={props.onclick.clone()}>
             {
                 match props.tile {
                     Tile::Unmarked => html! {},

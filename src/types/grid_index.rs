@@ -17,6 +17,20 @@ pub(crate) enum GridIndex {
 
 impl GridIndex {
     pub(crate) const N: usize = 9;
+
+    pub(crate) const ALL_LINES: [[GridIndex; 3]; 8] = [
+        // Rows
+        [Self::UpperLeft, Self::Up, Self::UpperRight],
+        [Self::Left, Self::Center, Self::Right],
+        [Self::LowerLeft, Self::Down, Self::LowerRight],
+        // Columns
+        [Self::UpperLeft, Self::Left, Self::LowerLeft],
+        [Self::Up, Self::Center, Self::Down],
+        [Self::UpperRight, Self::Right, Self::LowerRight],
+        // Diagonals
+        [Self::UpperLeft, Self::Center, Self::LowerRight],
+        [Self::LowerLeft, Self::Center, Self::UpperRight],
+    ];
 }
 
 impl From<GridIndex> for usize {

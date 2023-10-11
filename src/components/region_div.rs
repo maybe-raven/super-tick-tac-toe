@@ -1,26 +1,37 @@
-use yew::{classes, function_component, html, Classes, Html, Properties};
+use yew::{classes, function_component, html, Callback, Classes, Html, Properties};
 
 use crate::{
     components::TileDiv,
-    types::{GridIndex, Region},
+    types::{GameState, GridIndex, Region},
 };
 
-#[derive(Clone, PartialEq, Eq, Properties)]
+#[derive(Clone, PartialEq, Properties)]
 pub(crate) struct Props {
     pub(crate) index: GridIndex,
     pub(crate) region: Region,
+    pub(crate) callback: Callback<(GridIndex, GridIndex), ()>,
 }
 
 #[function_component(RegionDiv)]
 pub(crate) fn region_div(props: &Props) -> Html {
+    let tiles_disabled = !matches!(props.region.state, GameState::InProgress);
+
     let children: Html = props
         .region
         .tiles
         .iter()
         .enumerate()
         .map(|(index, &tile)| {
+            let tile_index = GridIndex::try_from(index).unwrap();
+
+            let onclick = {
+                let callback = props.callback.clone();
+                let region_index = props.index;
+                Callback::from(move |_| callback.emit((region_index, tile_index)))
+            };
+
             html! {
-                <TileDiv index={GridIndex::try_from(index).unwrap()} tile={tile} />
+                <TileDiv index={tile_index} tile={tile} onclick={onclick} disabled={tiles_disabled} />
             }
         })
         .collect();
