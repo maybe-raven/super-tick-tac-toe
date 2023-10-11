@@ -7,6 +7,7 @@ pub(crate) struct Board {
     pub(crate) regions: GridArray<Region>,
     pub(crate) state: GameState,
     pub(crate) current_player: Player,
+    pub(crate) target_region_index: Option<GridIndex>,
 }
 impl Board {
     pub(crate) fn new() -> Self {
@@ -24,6 +25,8 @@ impl Board {
         }
 
         self.current_player = self.current_player.other();
+
+        self.target_region_index = Some(tile_index);
     }
 
     fn calc_state(&self) -> GameState {

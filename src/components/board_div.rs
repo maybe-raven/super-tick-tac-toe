@@ -2,7 +2,7 @@ use yew::{function_component, html, use_state_eq, Callback, Html, Properties};
 
 use crate::{
     components::RegionDiv,
-    types::{Board, GridIndex},
+    types::{Board, GameState, GridIndex},
 };
 
 #[derive(Clone, PartialEq, Eq, Properties)]
@@ -23,13 +23,21 @@ pub(crate) fn board_div() -> Html {
         })
     };
 
+    let enforce_target_region_index = board
+        .target_region_index
+        .is_some_and(|index| matches!(board[index].state, GameState::InProgress));
+
     let children: Vec<Html> = board
         .regions
         .iter()
         .enumerate()
         .map(|(index, &region)| {
+            let grid_index = GridIndex::try_from(index).unwrap();
+
+            let region_disabled = enforce_target_region_index && Some(grid_index) != board.target_region_index;
+
             html! {
-                <RegionDiv index={GridIndex::try_from(index).unwrap()} region={region} callback={callback.clone()} />
+                <RegionDiv index={grid_index} region={region} callback={callback.clone()} disabled={region_disabled} />
             }
         })
         .collect();

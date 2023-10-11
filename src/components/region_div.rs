@@ -10,11 +10,12 @@ pub(crate) struct Props {
     pub(crate) index: GridIndex,
     pub(crate) region: Region,
     pub(crate) callback: Callback<(GridIndex, GridIndex), ()>,
+    pub(crate) disabled: bool,
 }
 
 #[function_component(RegionDiv)]
 pub(crate) fn region_div(props: &Props) -> Html {
-    let tiles_disabled = !matches!(props.region.state, GameState::InProgress);
+    let tiles_disabled = props.disabled || !matches!(props.region.state, GameState::InProgress);
 
     let children: Html = props
         .region
