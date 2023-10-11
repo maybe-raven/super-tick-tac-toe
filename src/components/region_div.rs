@@ -1,22 +1,19 @@
-use yew::{function_component, html, Callback, Html, Properties};
+use yew::prelude::*;
 
 use crate::{
     components::TileDiv,
-    types::{GameState, GridIndex, Region},
+    types::{GridIndex, Region, Tile},
 };
 
 #[derive(Clone, PartialEq, Properties)]
 pub(crate) struct Props {
     pub(crate) index: GridIndex,
     pub(crate) region: Region,
-    pub(crate) callback: Callback<(GridIndex, GridIndex), ()>,
-    pub(crate) disabled: bool,
+    pub(crate) callback: Option<Callback<(GridIndex, GridIndex), ()>>,
 }
 
 #[function_component(RegionDiv)]
 pub(crate) fn region_div(props: &Props) -> Html {
-    let tiles_disabled = props.disabled || !matches!(props.region.state, GameState::InProgress);
-
     let children: Html = props
         .region
         .tiles
@@ -25,14 +22,18 @@ pub(crate) fn region_div(props: &Props) -> Html {
         .map(|(index, &tile)| {
             let tile_index = GridIndex::try_from(index).unwrap();
 
-            let onclick = {
-                let callback = props.callback.clone();
-                let region_index = props.index;
-                Callback::from(move |_| callback.emit((region_index, tile_index)))
+            let onclick = if matches!(tile, Tile::Unmarked) {
+                props.callback.as_ref().map(|callback| {
+                    let callback = callback.clone();
+                    let region_index = props.index;
+                    Callback::from(move |_| callback.emit((region_index, tile_index)))
+                })
+            } else {
+                None
             };
 
             html! {
-                <TileDiv index={tile_index} tile={tile} onclick={onclick} disabled={tiles_disabled} />
+                <TileDiv index={tile_index} tile={tile} onclick={onclick} />
             }
         })
         .collect();

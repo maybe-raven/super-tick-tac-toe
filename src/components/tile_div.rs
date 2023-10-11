@@ -1,4 +1,4 @@
-use yew::{classes, function_component, html, Callback, Html, MouseEvent, Properties};
+use yew::prelude::*;
 
 use crate::types::{GridIndex, Player, Tile};
 
@@ -6,14 +6,7 @@ use crate::types::{GridIndex, Player, Tile};
 pub(crate) struct Props {
     pub(crate) index: GridIndex,
     pub(crate) tile: Tile,
-    pub(crate) onclick: Callback<MouseEvent>,
-    pub(crate) disabled: bool,
-}
-
-impl Props {
-    fn is_interactive(&self) -> bool {
-        (!self.disabled) && matches!(self.tile, Tile::Unmarked)
-    }
+    pub(crate) onclick: Option<Callback<MouseEvent>>,
 }
 
 #[function_component(TileDiv)]
@@ -21,7 +14,7 @@ pub(crate) fn tile_div(props: &Props) -> Html {
     let css = classes!(
         "aspect-square",
         "bg-gray-800",
-        props.is_interactive().then_some("hover:bg-white"),
+        props.onclick.is_some().then_some("hover:bg-white"),
     );
 
     html! {

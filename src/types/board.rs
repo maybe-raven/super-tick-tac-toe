@@ -7,11 +7,17 @@ pub(crate) struct Board {
     pub(crate) regions: GridArray<Region>,
     pub(crate) state: GameState,
     pub(crate) current_player: Player,
-    pub(crate) target_region_index: Option<GridIndex>,
+    pub(crate) previous_play_index: Option<GridIndex>,
 }
 impl Board {
     pub(crate) fn new() -> Self {
         Self::default()
+    }
+
+    pub(crate) fn target_region_index(&self) -> Option<GridIndex> {
+        let previous_play_index = self.previous_play_index?;
+        matches!(self[previous_play_index].state, GameState::InProgress)
+            .then_some(previous_play_index)
     }
 
     pub(crate) fn mark_tile(&mut self, region_index: GridIndex, tile_index: GridIndex) {
@@ -26,7 +32,7 @@ impl Board {
 
         self.current_player = self.current_player.other();
 
-        self.target_region_index = Some(tile_index);
+        self.previous_play_index = Some(tile_index);
     }
 
     fn calc_state(&self) -> GameState {
