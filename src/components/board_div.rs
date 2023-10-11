@@ -2,7 +2,7 @@ use yew::{function_component, html, use_state_eq, Callback, Html, Properties};
 
 use crate::{
     components::RegionDiv,
-    types::{Board, GameState, GridIndex},
+    types::{Board, GameState, GridIndex, Player},
 };
 
 #[derive(Clone, PartialEq, Eq, Properties)]
@@ -42,9 +42,18 @@ pub(crate) fn board_div() -> Html {
         })
         .collect();
 
+    let current_player_text = match board.current_player {
+        Player::Circle => "Current Player: Circle",
+        Player::Cross => "Current Player: Cross",
+    };
+
     html! {
-        <div class="grid grid-cols-3 grid-rows-3 aspect-square mx-auto mt-12 max-w-lg">
-            { children }
+        <div class="flex flex-col mx-auto mt-12 max-w-lg text-center gap-1">
+            <div class="grid grid-cols-3 grid-rows-3 aspect-square bg-white gap-0.5">
+                { children }
+            </div>
+            <p>{ current_player_text }</p>
+            <p>{ "No winnder yet." }</p>
         </div>
     }
 }

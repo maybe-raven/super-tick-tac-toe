@@ -1,4 +1,4 @@
-use yew::{classes, function_component, html, Callback, Classes, Html, Properties};
+use yew::{function_component, html, Callback, Html, Properties};
 
 use crate::{
     components::TileDiv,
@@ -37,34 +37,11 @@ pub(crate) fn region_div(props: &Props) -> Html {
         })
         .collect();
 
-    let css = classes!(
-        "grid",
-        "grid-cols-3",
-        "grid-rows-3",
-        "aspect-square",
-        "border-white",
-        "box-border",
-        "p-3",
-        tile_border_classes(props.index)
-    );
-
     html! {
-        <div class={css}>
-            { children }
+        <div class="bg-gray-800 p-3">
+            <div class="grid grid-cols-3 grid-rows-3 aspect-square gap-0.5 bg-white">
+                { children }
+            </div>
         </div>
-    }
-}
-
-fn tile_border_classes(index: GridIndex) -> Classes {
-    match index {
-        GridIndex::UpperLeft => classes!("border-r", "border-b"),
-        GridIndex::UpperRight => classes!("border-l", "border-b"),
-        GridIndex::Up => classes!("border-l", "border-r", "border-b"),
-        GridIndex::Left => classes!("border-t", "border-r", "border-b"),
-        GridIndex::Right => classes!("border-l", "border-t", "border-b"),
-        GridIndex::Down => classes!("border-l", "border-r", "border-t"),
-        GridIndex::Center => classes!("border"),
-        GridIndex::LowerLeft => classes!("border-t", "border-r"),
-        GridIndex::LowerRight => classes!("border-t", "border-l"),
     }
 }

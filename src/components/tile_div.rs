@@ -1,4 +1,4 @@
-use yew::{classes, function_component, html, Callback, Classes, Html, MouseEvent, Properties};
+use yew::{classes, function_component, html, Callback, Html, MouseEvent, Properties};
 
 use crate::types::{GridIndex, Player, Tile};
 
@@ -20,10 +20,8 @@ impl Props {
 pub(crate) fn tile_div(props: &Props) -> Html {
     let css = classes!(
         "aspect-square",
-        "border-white",
-        "box-border",
+        "bg-gray-800",
         props.is_interactive().then_some("hover:bg-white"),
-        tile_border_classes(props.index)
     );
 
     html! {
@@ -57,19 +55,5 @@ fn player_svg(player: Player) -> Html {
                 }
             }
         </svg>
-    }
-}
-
-fn tile_border_classes(index: GridIndex) -> Classes {
-    match index {
-        GridIndex::UpperLeft => classes!("border-r", "border-b"),
-        GridIndex::UpperRight => classes!("border-l", "border-b"),
-        GridIndex::Up => classes!("border-l", "border-r", "border-b"),
-        GridIndex::Left => classes!("border-t", "border-r", "border-b"),
-        GridIndex::Right => classes!("border-l", "border-t", "border-b"),
-        GridIndex::Down => classes!("border-l", "border-r", "border-t"),
-        GridIndex::Center => classes!("border"),
-        GridIndex::LowerLeft => classes!("border-t", "border-r"),
-        GridIndex::LowerRight => classes!("border-t", "border-l"),
     }
 }
