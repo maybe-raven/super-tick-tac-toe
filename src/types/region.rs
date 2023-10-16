@@ -1,6 +1,5 @@
-use crate::types::BoardOutcome;
-
 use super::{board::BoardItem, Board, BoardIndex, BoardState, MarkTileResult, Player, Tile};
+use crate::types::BoardOutcome;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub(crate) struct Region {
@@ -18,15 +17,11 @@ impl Region {
     /// `true` if the state of the region has changed;
     /// `false` otherwise.
     pub(crate) fn mark_tile(&mut self, index: BoardIndex, player: Player) -> MarkTileResult {
-        if !self.is_markable() {
+        if !self.is_tile_enabled(index) {
             return MarkTileResult::NoChange;
         }
 
-        let tile = &mut self.board[index];
-        if !tile.is_markable() {
-            return MarkTileResult::NoChange;
-        }
-        *tile = Tile::Marked(player);
+        self.board[index] = Tile::Marked(player);
 
         match self.board.get_state() {
             BoardState::InProgress => MarkTileResult::TileMarked,
@@ -35,6 +30,10 @@ impl Region {
                 MarkTileResult::OutcomeDecided
             }
         }
+    }
+
+    pub(crate) fn is_tile_enabled(&self, index: BoardIndex) -> bool {
+        self.is_markable() && self.board[index].is_markable()
     }
 }
 

@@ -1,3 +1,5 @@
+use crate::IsNoneOr;
+
 use super::{board::BoardItem, Board, BoardIndex, BoardState, MarkTileResult, Player, Region};
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -22,19 +24,17 @@ impl Game {
             .then_some(previous_play_index)
     }
 
+    pub(crate) fn is_region_enabled(&self, index: BoardIndex) -> bool {
+        matches!(self.state, BoardState::InProgress)
+            && self.allowed_region_index().is_none_or(|i| i == index)
+    }
+
     pub(crate) fn mark_tile(
         &mut self,
         region_index: BoardIndex,
         tile_index: BoardIndex,
     ) -> MarkTileResult {
-        if matches!(self.state, BoardState::Complete(_)) {
-            return MarkTileResult::NoChange;
-        }
-
-        if self
-            .allowed_region_index()
-            .is_some_and(|allowed_index| allowed_index != region_index)
-        {
+        if !self.is_region_enabled(region_index) {
             return MarkTileResult::NoChange;
         }
 

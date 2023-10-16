@@ -1,10 +1,8 @@
+use crate::types::{Player, Tile};
 use yew::prelude::*;
-
-use crate::types::{BoardIndex, Player, Tile};
 
 #[derive(Clone, PartialEq, Properties)]
 pub(crate) struct Props {
-    pub(crate) index: BoardIndex,
     pub(crate) tile: Tile,
     pub(crate) onclick: Option<Callback<MouseEvent>>,
 }

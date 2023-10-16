@@ -1,10 +1,8 @@
-use yew::prelude::*;
-
 use crate::{
     components::RegionDiv,
-    types::{board::BoardItem, BoardIndex, BoardOutcome, BoardState, Game, MarkTileResult, Player},
-    IsNoneOr,
+    types::{BoardIndex, BoardOutcome, BoardState, Game, MarkTileResult, Player},
 };
+use yew::prelude::*;
 
 #[derive(Clone, PartialEq, Eq, Properties)]
 pub(crate) struct Props {
@@ -15,7 +13,7 @@ pub(crate) struct Props {
 pub(crate) fn game_div() -> Html {
     let game = use_state_eq(Game::new);
 
-    let callback = matches!(game.state, BoardState::InProgress).then(|| {
+    let callback = {
         let state = game.clone();
         Callback::from(
             move |(region_index, tile_index): (BoardIndex, BoardIndex)| {
@@ -28,21 +26,13 @@ pub(crate) fn game_div() -> Html {
                 }
             },
         )
-    });
-
-    let target_region_index = game.allowed_region_index();
+    };
 
     let children: Vec<Html> = game
         .board
         .enumerate()
         .map(|(index, &region)| {
-            let callback = if region.is_markable()
-                && target_region_index.is_none_or(|target_index| target_index == index)
-            {
-                callback.clone()
-            } else {
-                None
-            };
+            let callback = game.is_region_enabled(index).then(|| callback.clone());
 
             html! {
                 <RegionDiv index={index} region={region} callback={callback} />

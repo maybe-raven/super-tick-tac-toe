@@ -1,8 +1,7 @@
+use self::{home::Home, how_to_play::HowToPlay};
 use crate::components::GameDiv;
 use yew::prelude::*;
 use yew_router::prelude::*;
-
-use self::{home::Home, how_to_play::HowToPlay};
 
 mod home;
 mod how_to_play;

@@ -1,6 +1,5 @@
-use std::{iter::Enumerate, slice::Iter};
-
 use super::BoardIndex;
+use std::{iter::Enumerate, slice::Iter};
 
 #[derive(Debug, Clone)]
 pub(crate) struct BoardEnumerate<'a, T> {

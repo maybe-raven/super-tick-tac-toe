@@ -1,9 +1,8 @@
-use yew::prelude::*;
-
 use crate::{
     components::TileDiv,
-    types::{board::BoardItem, BoardIndex, Region},
+    types::{BoardIndex, Region},
 };
+use yew::prelude::*;
 
 #[derive(Clone, PartialEq, Properties)]
 pub(crate) struct Props {
@@ -19,10 +18,10 @@ pub(crate) fn region_div(props: &Props) -> Html {
         .board
         .enumerate()
         .map(|(tile_index, &tile)| {
-            let onclick = if tile.is_markable() {
-                props.callback.as_ref().map(|callback| {
-                    let callback = callback.clone();
+            let onclick = if props.region.is_tile_enabled(tile_index) {
+                props.callback.clone().map(|callback| {
                     let region_index = props.index;
+                    let tile_index = tile_index;
                     Callback::from(move |_| callback.emit((region_index, tile_index)))
                 })
             } else {
@@ -30,7 +29,7 @@ pub(crate) fn region_div(props: &Props) -> Html {
             };
 
             html! {
-                <TileDiv index={tile_index} tile={tile} onclick={onclick} />
+                <TileDiv tile={tile} onclick={onclick} />
             }
         })
         .collect();
