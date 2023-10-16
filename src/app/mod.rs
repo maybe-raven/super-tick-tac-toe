@@ -1,4 +1,4 @@
-use crate::components::BoardDiv;
+use crate::components::GameDiv;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
@@ -28,10 +28,10 @@ fn switch(routes: Route) -> Html {
     match routes {
         Route::Home => html! { <Home /> },
         Route::HowToPlay => html! { <HowToPlay /> },
-        Route::LocalGame => html! { <BoardDiv /> },
-        Route::CreateOnlineGame => html! { <BoardDiv /> },
-        Route::JoinOnlineGame { .. } => html! { <BoardDiv /> },
-        Route::NotFound => html! { <BoardDiv /> },
+        Route::LocalGame => html! { <GameDiv /> },
+        Route::CreateOnlineGame => html! { <GameDiv /> },
+        Route::JoinOnlineGame { .. } => html! { <GameDiv /> },
+        Route::NotFound => html! { <GameDiv /> },
     }
 }
 

@@ -2,27 +2,24 @@ use yew::prelude::*;
 
 use crate::{
     components::TileDiv,
-    types::{GridIndex, Region, Tile},
+    types::{board::BoardItem, BoardIndex, Region},
 };
 
 #[derive(Clone, PartialEq, Properties)]
 pub(crate) struct Props {
-    pub(crate) index: GridIndex,
+    pub(crate) index: BoardIndex,
     pub(crate) region: Region,
-    pub(crate) callback: Option<Callback<(GridIndex, GridIndex), ()>>,
+    pub(crate) callback: Option<Callback<(BoardIndex, BoardIndex), ()>>,
 }
 
 #[function_component(RegionDiv)]
 pub(crate) fn region_div(props: &Props) -> Html {
     let children: Html = props
         .region
-        .tiles
-        .iter()
+        .board
         .enumerate()
-        .map(|(index, &tile)| {
-            let tile_index = GridIndex::try_from(index).unwrap();
-
-            let onclick = if matches!(tile, Tile::Unmarked) {
+        .map(|(tile_index, &tile)| {
+            let onclick = if tile.is_markable() {
                 props.callback.as_ref().map(|callback| {
                     let callback = callback.clone();
                     let region_index = props.index;

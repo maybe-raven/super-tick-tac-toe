@@ -1,11 +1,11 @@
-use std::ops::Index;
+use crate::types::BoardOutcome;
 
-use super::{GameState, GridArray, GridIndex, Player, Tile};
+use super::{board::BoardItem, Board, BoardIndex, BoardState, MarkTileResult, Player, Tile};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub(crate) struct Region {
-    pub(crate) tiles: GridArray<Tile>,
-    pub(crate) state: GameState,
+    pub(crate) board: Board<Tile>,
+    pub(crate) state: BoardState,
 }
 
 impl Region {
@@ -17,60 +17,33 @@ impl Region {
     /// # Returns
     /// `true` if the state of the region has changed;
     /// `false` otherwise.
-    pub(crate) fn mark_tile(&mut self, index: GridIndex, player: Player) -> bool {
-        if !matches!(self.state, GameState::InProgress) {
-            return false;
+    pub(crate) fn mark_tile(&mut self, index: BoardIndex, player: Player) -> MarkTileResult {
+        if !self.is_markable() {
+            return MarkTileResult::NoChange;
         }
 
-        let tile = &mut self.tiles[index];
-        if matches!(*tile, Tile::Marked(_)) {
-            return false;
+        let tile = &mut self.board[index];
+        if !tile.is_markable() {
+            return MarkTileResult::NoChange;
         }
         *tile = Tile::Marked(player);
 
-        let new_state = self.calc_state();
-        if self.state != new_state {
-            self.state = new_state;
-            true
-        } else {
-            false
+        match self.board.get_state() {
+            BoardState::InProgress => MarkTileResult::TileMarked,
+            BoardState::Complete(outcome) => {
+                self.state = BoardState::Complete(outcome);
+                MarkTileResult::OutcomeDecided
+            }
         }
-    }
-
-    fn calc_state(&self) -> GameState {
-        if self.check_player(Player::Circle) {
-            GameState::WonBy(Player::Circle)
-        } else if self.check_player(Player::Cross) {
-            GameState::WonBy(Player::Cross)
-        } else if self.is_filled() {
-            GameState::Draw
-        } else {
-            GameState::InProgress
-        }
-    }
-
-    /// Check if the specified player has at least one three-in-a-line.
-    fn check_player(&self, player: Player) -> bool {
-        GridIndex::ALL_LINES.iter().any(|combo| {
-            combo.iter().all(|&index| match self[index] {
-                Tile::Marked(player_mark) => player_mark == player,
-                _ => false,
-            })
-        })
-    }
-
-    /// Check if all the tiles in the region have been marked.
-    fn is_filled(&self) -> bool {
-        self.tiles
-            .iter()
-            .all(|&tile| matches!(tile, Tile::Marked(_)))
     }
 }
 
-impl Index<GridIndex> for Region {
-    type Output = Tile;
+impl BoardItem for Region {
+    fn is_marked_by(&self, player: Player) -> bool {
+        matches!(self.state, BoardState::Complete(BoardOutcome::WonBy(p)) if p == player)
+    }
 
-    fn index(&self, index: GridIndex) -> &Self::Output {
-        self.tiles.index(usize::from(index))
+    fn is_markable(&self) -> bool {
+        matches!(self.state, BoardState::InProgress)
     }
 }
