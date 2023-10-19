@@ -18,29 +18,13 @@
       ]
     },
     {
-      "label": "Tailwind watch",
-      "type": "shell",
-      "group": "build",
-      "command": "./tailwindcss",
-      "args": [
-        "--watch",
-        "--config",
-        "./tailwind.config.js",
-        "--output",
-        "./app.css"
-      ],
-      "presentation": {
-        "panel": "dedicated"
-      }
-    },
-    {
       "label": "Trunk serve",
       "type": "shell",
       "group": "build",
-      "command": "trunk",
+      "command": "zsh",
       "args": [
-        "serve",
-        "--open"
+        "-c",
+        "z frontend; trunk serve --open --watch ../"
       ],
       "presentation": {
         "panel": "dedicated"
