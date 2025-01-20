@@ -1,5 +1,7 @@
-use common::{Player, Tile};
+use common::Tile;
 use yew::prelude::*;
+
+use crate::components::player_svg;
 
 #[derive(Clone, PartialEq, Properties)]
 pub(crate) struct Props {
@@ -31,25 +33,5 @@ pub(crate) fn tile_div(props: &Props) -> Html {
                 }
             }
         </div>
-    }
-}
-
-fn player_svg(player: Player) -> Html {
-    html! {
-        <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-            {
-                match player {
-                Player::Circle => html! {
-                    <circle cx="50%" cy="50%" r="40%" stroke="white" stroke-width="3" fill="transparent" />
-                },
-                Player::Cross => html! {
-                    <>
-                        <line x1="10%" y1="10%" x2="90%" y2="90%" stroke="white" stroke-width="3" />
-                        <line x1="90%" y1="10%" x2="10%" y2="90%" stroke="white" stroke-width="3" />
-                    </>
-                }
-                }
-            }
-        </svg>
     }
 }

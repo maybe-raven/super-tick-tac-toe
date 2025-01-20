@@ -1,5 +1,5 @@
-use crate::components::TileDiv;
-use common::{BoardIndex, BoardItem, Region};
+use crate::components::{player_svg, TileDiv};
+use common::{BoardIndex, BoardItem, BoardState, Region};
 use yew::prelude::*;
 
 #[derive(Clone, PartialEq, Properties)]
@@ -31,6 +31,17 @@ pub(crate) fn region_div(props: &Props) -> Html {
         })
         .collect();
 
+    let inner =
+        if let BoardState::Complete(common::BoardOutcome::WonBy(winner)) = props.region.state {
+            player_svg(winner)
+        } else {
+            html! {
+                <div class="grid grid-cols-3 grid-rows-3 aspect-square gap-0.5 bg-white">
+                    { children }
+                </div>
+            }
+        };
+
     let css = classes!(
         "p-3",
         if props.callback.is_some() && props.region.is_markable() {
@@ -42,9 +53,7 @@ pub(crate) fn region_div(props: &Props) -> Html {
 
     html! {
         <div class={css}>
-            <div class="grid grid-cols-3 grid-rows-3 aspect-square gap-0.5 bg-white">
-                { children }
-            </div>
+            { inner }
         </div>
     }
 }
