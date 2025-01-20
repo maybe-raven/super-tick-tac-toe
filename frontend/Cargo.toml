@@ -8,4 +8,7 @@ edition = "2021"
 [dependencies]
 yew = { git = "https://github.com/yewstack/yew/", features = ["csr"] }
 yew-router = { git = "https://github.com/yewstack/yew.git" }
+rand = "0.8.5"
+getrandom = { version = "0.2", features = ["js"] }
 common = { path = "../common" }
+tracing = "0.1.41"

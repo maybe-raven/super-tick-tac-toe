@@ -14,23 +14,26 @@ enum Route {
     HowToPlay,
     #[at("/local")]
     LocalGame,
-    #[at("/create")]
-    CreateOnlineGame,
-    #[at("/join/:id")]
-    JoinOnlineGame,
-    #[not_found]
-    #[at("/404")]
-    NotFound,
+    #[at("/ai")]
+    AiGame,
+    // #[at("/create")]
+    // CreateOnlineGame,
+    // #[at("/join/:id")]
+    // JoinOnlineGame,
+    // #[not_found]
+    // #[at("/404")]
+    // NotFound,
 }
 
 fn switch(routes: Route) -> Html {
     match routes {
         Route::Home => html! { <Home /> },
         Route::HowToPlay => html! { <HowToPlay /> },
-        Route::LocalGame => html! { <GameDiv /> },
-        Route::CreateOnlineGame => html! { <GameDiv /> },
-        Route::JoinOnlineGame { .. } => html! { <GameDiv /> },
-        Route::NotFound => html! { <GameDiv /> },
+        Route::LocalGame => html! { <GameDiv use_ai={false} /> },
+        Route::AiGame => html! { <GameDiv use_ai={true} /> },
+        // Route::CreateOnlineGame => html! { <GameDiv /> },
+        // Route::JoinOnlineGame { .. } => html! { <GameDiv /> },
+        // Route::NotFound => html! { <GameDiv /> },
     }
 }
 

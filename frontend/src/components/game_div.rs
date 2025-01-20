@@ -1,27 +1,33 @@
-use crate::components::RegionDiv;
+use crate::{ai, components::RegionDiv};
 use common::{BoardIndex, BoardOutcome, BoardState, Game, MarkTileResult, Player};
 use yew::prelude::*;
 
-#[derive(Clone, PartialEq, Eq, Properties)]
+#[derive(Clone, Copy, PartialEq, Eq, Properties)]
 pub(crate) struct Props {
-    pub(crate) board: Game,
+    pub(crate) use_ai: bool,
 }
 
 #[function_component(GameDiv)]
-pub(crate) fn game_div() -> Html {
+pub(crate) fn game_div(props: &Props) -> Html {
     let game = use_state_eq(Game::new);
-
+    let use_ai = props.use_ai;
     let callback = {
         let state = game.clone();
         Callback::from(
             move |(region_index, tile_index): (BoardIndex, BoardIndex)| {
                 let mut new_board = (*state).clone();
-                if !matches!(
-                    new_board.mark_tile(region_index, tile_index),
-                    MarkTileResult::NoChange,
-                ) {
-                    state.set(new_board);
-                }
+                match new_board.mark_tile(region_index, tile_index) {
+                    MarkTileResult::NoChange => {
+                        return;
+                    }
+                    MarkTileResult::TileMarked => {
+                        if use_ai {
+                            ai::random::make_move(&mut new_board);
+                        }
+                    }
+                    MarkTileResult::OutcomeDecided => (),
+                };
+                state.set(new_board);
             },
         )
     };
