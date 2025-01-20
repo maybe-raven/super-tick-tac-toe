@@ -1,9 +1,9 @@
 use super::BoardIndex;
-use std::{iter::Enumerate, slice::Iter};
+use std::{iter, slice::Iter};
 
 #[derive(Debug, Clone)]
 pub struct BoardEnumerate<'a, T> {
-    pub(super) iter: Enumerate<Iter<'a, T>>,
+    pub(super) iter: iter::Enumerate<Iter<'a, T>>,
 }
 
 impl<'a, T> Iterator for BoardEnumerate<'a, T> {

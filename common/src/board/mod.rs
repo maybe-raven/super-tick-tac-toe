@@ -1,14 +1,14 @@
+pub mod index;
+pub mod item;
 #[allow(clippy::module_inception)]
-pub mod board_enumerate;
-pub mod board_index;
-pub mod board_item;
-pub mod board_state;
+pub mod iter;
+pub mod state;
 
 pub use {
-    board_enumerate::BoardEnumerate,
-    board_index::BoardIndex,
-    board_item::BoardItem,
-    board_state::{BoardOutcome, BoardState},
+    index::BoardIndex,
+    item::BoardItem,
+    iter::BoardEnumerate,
+    state::{BoardOutcome, BoardState},
 };
 
 use crate::Player;
