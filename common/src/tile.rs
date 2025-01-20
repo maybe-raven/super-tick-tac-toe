@@ -1,6 +1,6 @@
-use crate::{BoardItem, Player};
+use crate::{BoardItem, BoardOutcome, Player};
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Tile {
     #[default]
     Unmarked,
@@ -14,7 +14,7 @@ pub enum MarkTileResult {
     /// A tile has been marked, but the outcome has not been decided yet.
     TileMarked,
     /// A tile has been marked, and the outcome has been decided.
-    OutcomeDecided,
+    OutcomeDecided(BoardOutcome),
 }
 
 impl BoardItem for Tile {

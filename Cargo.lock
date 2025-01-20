@@ -511,8 +511,10 @@ version = "0.1.0"
 dependencies = [
  "common",
  "getrandom",
+ "gloo-console",
  "rand",
  "tracing",
+ "wasm-bindgen",
  "yew",
  "yew-router",
 ]

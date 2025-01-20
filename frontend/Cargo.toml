@@ -12,3 +12,5 @@ rand = "0.8.5"
 getrandom = { version = "0.2", features = ["js"] }
 common = { path = "../common" }
 tracing = "0.1.41"
+gloo-console = "0.3.0"
+wasm-bindgen = "0.2.100"

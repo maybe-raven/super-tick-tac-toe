@@ -1,6 +1,6 @@
 use crate::{Board, BoardIndex, BoardItem, BoardOutcome, BoardState, MarkTileResult, Player, Tile};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Hash)]
 pub struct Region {
     pub board: Board<Tile>,
     pub state: BoardState,
@@ -20,7 +20,7 @@ impl Region {
             BoardState::InProgress => MarkTileResult::TileMarked,
             BoardState::Complete(outcome) => {
                 self.state = BoardState::Complete(outcome);
-                MarkTileResult::OutcomeDecided
+                MarkTileResult::OutcomeDecided(outcome)
             }
         }
     }

@@ -14,7 +14,7 @@ pub use {
 use crate::Player;
 use std::ops::{Index, IndexMut};
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Board<T> {
     pub tiles: [T; BoardIndex::N],
 }

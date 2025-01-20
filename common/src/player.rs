@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Player {
     #[default]
     Circle, // Always goes first.

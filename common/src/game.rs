@@ -1,7 +1,12 @@
 #![allow(unstable_name_collisions)]
-use crate::{Board, BoardIndex, BoardItem, BoardState, IsNoneOr, MarkTileResult, Player, Region};
+use std::iter::Filter;
 
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+use crate::{
+    Board, BoardEnumerate, BoardIndex, BoardItem, BoardState, IsNoneOr, MarkTileResult, Player,
+    Region,
+};
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
 pub struct Game {
     pub board: Board<Region>,
     pub state: BoardState,
@@ -40,11 +45,11 @@ impl Game {
         let result = match self.board[region_index].mark_tile(tile_index, self.current_player) {
             MarkTileResult::NoChange => return MarkTileResult::NoChange,
             MarkTileResult::TileMarked => MarkTileResult::TileMarked,
-            MarkTileResult::OutcomeDecided => match self.board.get_state() {
+            MarkTileResult::OutcomeDecided(_) => match self.board.get_state() {
                 BoardState::InProgress => MarkTileResult::TileMarked,
                 BoardState::Complete(outcome) => {
                     self.state = BoardState::Complete(outcome);
-                    MarkTileResult::OutcomeDecided
+                    MarkTileResult::OutcomeDecided(outcome)
                 }
             },
         };
@@ -55,3 +60,17 @@ impl Game {
         result
     }
 }
+
+// pub enum PlayableRegionsIter {
+//     Single(Option<BoardIndex>),
+//     Iter(BoardEnumerate),
+// }
+//
+// impl PlayableRegionsIter {
+//     fn new(game: &Game) -> Self {
+//         let iter = game
+//             .board
+//             .enumerate()
+//             .filter(|(_, region)| region.is_markable());
+//     }
+// }

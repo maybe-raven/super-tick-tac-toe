@@ -22,10 +22,10 @@ pub(crate) fn game_div(props: &Props) -> Html {
                     }
                     MarkTileResult::TileMarked => {
                         if use_ai {
-                            ai::random::make_move(&mut new_board);
+                            ai::exhaustive::make_move(&mut new_board);
                         }
                     }
-                    MarkTileResult::OutcomeDecided => (),
+                    MarkTileResult::OutcomeDecided(_) => (),
                 };
                 state.set(new_board);
             },
