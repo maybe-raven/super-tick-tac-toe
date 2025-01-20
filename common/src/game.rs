@@ -1,3 +1,4 @@
+#![allow(unstable_name_collisions)]
 use crate::{Board, BoardIndex, BoardItem, BoardState, IsNoneOr, MarkTileResult, Player, Region};
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]

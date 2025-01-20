@@ -1,5 +1,5 @@
 use crate::components::TileDiv;
-use common::{BoardIndex, Region};
+use common::{BoardIndex, BoardItem, Region};
 use yew::prelude::*;
 
 #[derive(Clone, PartialEq, Properties)]
@@ -19,7 +19,6 @@ pub(crate) fn region_div(props: &Props) -> Html {
             let onclick = if props.region.is_tile_enabled(tile_index) {
                 props.callback.clone().map(|callback| {
                     let region_index = props.index;
-                    let tile_index = tile_index;
                     Callback::from(move |_| callback.emit((region_index, tile_index)))
                 })
             } else {
@@ -32,8 +31,17 @@ pub(crate) fn region_div(props: &Props) -> Html {
         })
         .collect();
 
+    let css = classes!(
+        "p-3",
+        if props.callback.is_some() && props.region.is_markable() {
+            "bg-gray-800"
+        } else {
+            "bg-neutral-600"
+        }
+    );
+
     html! {
-        <div class="bg-gray-800 p-3">
+        <div class={css}>
             <div class="grid grid-cols-3 grid-rows-3 aspect-square gap-0.5 bg-white">
                 { children }
             </div>

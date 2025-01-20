@@ -9,12 +9,6 @@ pub struct Region {
 impl Region {
     /// Mark the specified tile with the specified player,
     /// then update the state of the region accordingly.
-    /// Does nothing if the region game is already done.
-    /// Does nothing if the tile is already marked.
-    ///
-    /// # Returns
-    /// `true` if the state of the region has changed;
-    /// `false` otherwise.
     pub fn mark_tile(&mut self, index: BoardIndex, player: Player) -> MarkTileResult {
         if !self.is_tile_enabled(index) {
             return MarkTileResult::NoChange;

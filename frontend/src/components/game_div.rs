@@ -38,13 +38,12 @@ pub(crate) fn game_div() -> Html {
         })
         .collect();
 
-    let current_player_text = match game.current_player {
-        Player::Circle => "Current Player: Circle",
-        Player::Cross => "Current Player: Cross",
-    };
-
     let game_state_text = match game.state {
-        BoardState::InProgress => "Game In Progress".to_owned(),
+        BoardState::InProgress => match game.current_player {
+            Player::Circle => "Current Player: Circle",
+            Player::Cross => "Current Player: Cross",
+        }
+        .to_owned(),
         BoardState::Complete(BoardOutcome::Draw) => "Draw".to_owned(),
         BoardState::Complete(BoardOutcome::WonBy(player)) => {
             format!("Victor: {}", player)
@@ -56,7 +55,6 @@ pub(crate) fn game_div() -> Html {
             <div class="grid grid-cols-3 grid-rows-3 aspect-square bg-white gap-0.5">
                 { children }
             </div>
-            <p>{ current_player_text }</p>
             <p>{ game_state_text }</p>
         </div>
     }

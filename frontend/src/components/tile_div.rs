@@ -9,10 +9,15 @@ pub(crate) struct Props {
 
 #[function_component(TileDiv)]
 pub(crate) fn tile_div(props: &Props) -> Html {
+    let enabled = props.onclick.is_some();
     let css = classes!(
         "aspect-square",
-        "bg-gray-800",
-        props.onclick.is_some().then_some("hover:bg-white"),
+        if enabled {
+            "bg-gray-800"
+        } else {
+            "bg-neutral-600"
+        },
+        enabled.then_some("hover:bg-white"),
     );
 
     html! {
