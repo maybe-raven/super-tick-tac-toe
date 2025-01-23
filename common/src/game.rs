@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{Board, BoardIndex, BoardItem, BoardState, IsNoneOr, MarkTileResult, Player, Region};
 
+pub type Play = (BoardIndex, BoardIndex);
+
 #[derive(Debug, Clone, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Game {
     pub board: Board<Region>,
@@ -29,11 +31,7 @@ impl Game {
             && self.allowed_region_index().my_is_none_or(|i| i == index)
     }
 
-    pub fn mark_tile(
-        &mut self,
-        region_index: BoardIndex,
-        tile_index: BoardIndex,
-    ) -> MarkTileResult {
+    pub fn mark_tile(&mut self, (region_index, tile_index): Play) -> MarkTileResult {
         if !self.is_region_enabled(region_index) {
             return MarkTileResult::NoChange;
         }

@@ -1,10 +1,10 @@
 use rand::{rngs::ThreadRng, seq::IteratorRandom, thread_rng};
 
-use common::{BoardIndex, BoardState, Game, MarkTileResult};
+use crate::{BoardIndex, BoardState, Game, MarkTileResult};
 
 pub fn make_move(game: &mut Game) {
-    let (region_index, tile_index) = thread_rng().generate_move(game);
-    let result = game.mark_tile(region_index, tile_index);
+    let play = thread_rng().generate_move(game);
+    let result = game.mark_tile(play);
     assert!(!matches!(result, MarkTileResult::NoChange));
 }
 

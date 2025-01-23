@@ -1,22 +1,13 @@
-#![allow(unused)]
+use std::{cell::RefCell, rc::Rc};
 
-use std::{
-    cell::RefCell,
-    rc::{Rc, Weak},
-    slice,
-};
-
-use gloo_console::log;
 use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
-use yew_agent::oneshot::oneshot;
+use tracing::{debug, instrument};
 
-use common::{
-    BoardIndex, BoardItem, BoardOutcome, BoardState, Game, MarkTileResult, Player, Region,
+use crate::{
+    BoardIndex, BoardItem, BoardOutcome, BoardState, Game, MarkTileResult, Play, Player, Region,
 };
-use web_time::{Duration, Instant};
-use yew::{platform::spawn_local, Callback, UseStateHandle};
 
-use super::random::{self, GenerateMove};
+use super::random::GenerateMove;
 
 const EXPLORE_PARAM: f32 = 2.0;
 const SCORE_SIMULATED_WIN: f32 = 1.0;
@@ -26,26 +17,21 @@ const SCORE_IMMEDIATE_WIN: f32 = 2.0;
 const SCORE_IMMEDIATE_DRAW: f32 = 0.0;
 const SCORE_IMMEDIATE_LOSS: f32 = -2.0;
 
-type Play = (BoardIndex, BoardIndex);
-
-#[oneshot]
-pub fn MakeMoveTask(mut game: Game) -> Play {
+#[instrument(skip(should_terminate))]
+pub fn make_move(game: Game, should_terminate: impl Fn() -> bool) -> Play {
     assert!(matches!(game.state, BoardState::InProgress));
 
-    let timeout = Instant::now() + Duration::from_secs_f32(5.0);
-
     let mut rng = thread_rng();
-    let mut root = Node::new_root();
+    let root = Node::new_root();
 
     loop {
         Node::explore(&root, &mut rng, game.clone());
-        if Instant::now() > timeout {
+        if should_terminate() {
             break;
         }
     }
 
     let root = root.borrow();
-    log!(root.n_visits);
     let best_node = root
         .children
         .iter()
@@ -61,29 +47,33 @@ pub fn MakeMoveTask(mut game: Game) -> Play {
 
 fn simulate(mut game: Game, rng: &mut ThreadRng) -> f32 {
     loop {
-        let (region_index, tile_index) = rng.generate_move(&game);
-        let result = game.mark_tile(region_index, tile_index);
+        let play = rng.generate_move(&game);
+        let result = game.mark_tile(play);
         match result {
             MarkTileResult::NoChange => unreachable!(
                 "generated move should always be valid and should never result in NoChange"
             ),
             MarkTileResult::TileMarked => (),
-            MarkTileResult::OutcomeDecided(outcome) => match outcome {
-                BoardOutcome::Draw => return SCORE_SIMULATED_DRAW,
-                BoardOutcome::WonBy(Player::Cross) => return SCORE_SIMULATED_WIN,
-                BoardOutcome::WonBy(Player::Circle) => return SCORE_SIMULATED_LOSS,
-            },
+            MarkTileResult::OutcomeDecided(outcome) => {
+                let score = match outcome {
+                    BoardOutcome::Draw => SCORE_SIMULATED_DRAW,
+                    BoardOutcome::WonBy(Player::Cross) => SCORE_SIMULATED_WIN,
+                    BoardOutcome::WonBy(Player::Circle) => SCORE_SIMULATED_LOSS,
+                };
+                debug!("simulated win");
+                return score;
+            }
         }
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub(crate) struct Node {
     play: Option<Play>,
     score: f32,
     n_visits: usize,
     children: Vec<Rc<RefCell<Node>>>,
-    parent: Option<Weak<RefCell<Node>>>,
+    // parent: Option<Weak<RefCell<Node>>>,
 }
 
 impl Node {
@@ -93,7 +83,7 @@ impl Node {
             score: 0.0,
             n_visits: 0,
             children: Vec::new(),
-            parent: None,
+            // parent: None,
         }))
     }
     fn add_child(this: &Rc<RefCell<Node>>, play: Play) {
@@ -102,10 +92,11 @@ impl Node {
             score: 0.0,
             n_visits: 0,
             children: Vec::new(),
-            parent: Some(Rc::downgrade(this)),
+            // parent: Some(Rc::downgrade(this)),
         };
         this.borrow_mut().children.push(Rc::new(RefCell::new(node)));
     }
+    #[instrument]
     fn expand(this: &Rc<RefCell<Node>>, rng: &mut ThreadRng, game: Game) -> (f32, usize) {
         assert!(matches!(game.state, BoardState::InProgress));
         assert! {
@@ -138,12 +129,13 @@ impl Node {
         this.borrow_mut().score += total_score;
         (total_score, n)
     }
+    #[instrument]
     fn explore(this: &Rc<RefCell<Node>>, rng: &mut ThreadRng, mut game: Game) -> (f32, usize) {
         assert!(matches!(game.state, BoardState::InProgress));
 
         let play = this.borrow().play;
-        if let Some((region_index, tile_index)) = play {
-            let result = game.mark_tile(region_index, tile_index);
+        if let Some(play) = play {
+            let result = game.mark_tile(play);
             match result {
                 MarkTileResult::NoChange => panic!(
                 "only markable indices should be used and this should never results in NoChange."
@@ -158,6 +150,7 @@ impl Node {
                     };
                     this.score += additional_score;
                     this.n_visits += 1;
+                    debug!("immediate win");
                     return (additional_score, 1);
                 }
             }
@@ -186,14 +179,15 @@ impl Node {
 
         (additional_score, n)
     }
+    #[instrument]
     fn rollout(&mut self, rng: &mut ThreadRng, mut game: Game) -> f32 {
         assert_eq!(self.n_visits, 0);
         assert_eq!(self.score, 0.0);
 
-        let (region_index, tile_index) = self
+        let play = self
             .play
             .expect("all nodes except the root should denote a play from the parent game state");
-        let result = game.mark_tile(region_index, tile_index);
+        let result = game.mark_tile(play);
         match result {
             MarkTileResult::NoChange => panic!(
                 "only markable indices should be used and this should never results in NoChange."
@@ -212,6 +206,6 @@ impl Node {
     }
     fn ucb1(&self, parent_n_visits: usize) -> f32 {
         self.score / self.n_visits as f32
-            + ((parent_n_visits as f32).ln() / self.n_visits as f32).sqrt()
+            + EXPLORE_PARAM * ((parent_n_visits as f32).ln() / self.n_visits as f32).sqrt()
     }
 }

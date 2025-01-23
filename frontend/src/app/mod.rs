@@ -1,8 +1,5 @@
 use self::{home::Home, how_to_play::HowToPlay};
-use crate::{
-    ai::mct::MakeMoveTask,
-    components::{AIGameDiv, LMGameDiv},
-};
+use crate::components::{game_div::AITask, AIGameDiv, LMGameDiv};
 use yew::prelude::*;
 use yew_agent::oneshot::OneshotProvider;
 use yew_router::prelude::*;
@@ -35,9 +32,9 @@ fn switch(routes: Route) -> Html {
         Route::HowToPlay => html! { <HowToPlay /> },
         Route::LocalGame => html! { <LMGameDiv /> },
         Route::AiGame => html! {
-            <OneshotProvider<MakeMoveTask> path="/worker.js">
+            <OneshotProvider<AITask> path="/worker.js">
                 <AIGameDiv />
-            </OneshotProvider<MakeMoveTask>>
+            </OneshotProvider<AITask>>
         },
         // Route::CreateOnlineGame => html! { <GameDiv /> },
         // Route::JoinOnlineGame { .. } => html! { <GameDiv /> },

@@ -1,6 +1,6 @@
-use frontend::ai::mct::MakeMoveTask;
+use frontend::AITask;
 use yew_agent::Registrable;
 
 fn main() {
-    MakeMoveTask::registrar().register();
+    AITask::registrar().register();
 }
