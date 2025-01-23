@@ -1,6 +1,8 @@
+use serde::{Deserialize, Serialize};
+
 use crate::{Board, BoardIndex, BoardItem, BoardOutcome, BoardState, MarkTileResult, Player, Tile};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Hash, Serialize, Deserialize)]
 pub struct Region {
     pub board: Board<Tile>,
     pub state: BoardState,

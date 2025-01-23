@@ -4,7 +4,11 @@ pub(crate) mod tile_div;
 
 use common::Player;
 use yew::{html, Html};
-pub(crate) use {game_div::GameDiv, region_div::RegionDiv, tile_div::TileDiv};
+pub(crate) use {
+    game_div::{AIGameDiv, LMGameDiv},
+    region_div::RegionDiv,
+    tile_div::TileDiv,
+};
 
 fn player_svg(player: Player) -> Html {
     html! {

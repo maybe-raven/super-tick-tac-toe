@@ -1,9 +1,19 @@
+use crate::{Board, BoardItem};
+
 use super::BoardIndex;
-use std::{iter, slice::Iter};
+use std::{iter::Enumerate, slice::Iter};
 
 #[derive(Debug, Clone)]
 pub struct BoardEnumerate<'a, T> {
-    pub(super) iter: iter::Enumerate<Iter<'a, T>>,
+    iter: Enumerate<Iter<'a, T>>,
+}
+
+impl<'a, T> From<&'a Board<T>> for BoardEnumerate<'a, T> {
+    fn from(board: &'a Board<T>) -> Self {
+        BoardEnumerate {
+            iter: board.tiles.iter().enumerate(),
+        }
+    }
 }
 
 impl<'a, T> Iterator for BoardEnumerate<'a, T> {
@@ -18,8 +28,33 @@ impl<'a, T> Iterator for BoardEnumerate<'a, T> {
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        (BoardIndex::N, Some(BoardIndex::N))
+        self.iter.size_hint()
     }
 }
 
 impl<'a, T> ExactSizeIterator for BoardEnumerate<'a, T> {}
+
+pub struct Unmarked<'a, T> {
+    iter: BoardEnumerate<'a, T>,
+}
+
+impl<'a, T> From<&'a Board<T>> for Unmarked<'a, T> {
+    fn from(board: &'a Board<T>) -> Self {
+        Self { iter: board.into() }
+    }
+}
+
+impl<'a, T> Iterator for Unmarked<'a, T>
+where
+    T: BoardItem,
+{
+    type Item = (BoardIndex, &'a T);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.by_ref().find(|&item| item.1.is_markable())
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (0, self.iter.size_hint().1)
+    }
+}

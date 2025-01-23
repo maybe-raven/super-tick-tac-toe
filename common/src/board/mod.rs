@@ -4,6 +4,9 @@ pub mod item;
 pub mod iter;
 pub mod state;
 
+use iter::Unmarked;
+use serde::{Deserialize, Serialize};
+
 pub use {
     index::BoardIndex,
     item::BoardItem,
@@ -14,20 +17,22 @@ pub use {
 use crate::Player;
 use std::ops::{Index, IndexMut};
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Board<T> {
     pub tiles: [T; BoardIndex::N],
 }
 
 impl<T> Board<T> {
     pub fn enumerate(&self) -> BoardEnumerate<T> {
-        BoardEnumerate {
-            iter: self.tiles.iter().enumerate(),
-        }
+        BoardEnumerate::from(self)
     }
 }
 
 impl<T: BoardItem> Board<T> {
+    pub fn unmarked(&self) -> Unmarked<T> {
+        Unmarked::from(self)
+    }
+
     /// Get the state of the board.
     pub fn get_state(&self) -> BoardState {
         if self.check_player(Player::Circle) {

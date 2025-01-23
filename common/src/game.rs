@@ -1,12 +1,8 @@
-#![allow(unstable_name_collisions)]
-use std::iter::Filter;
+use serde::{Deserialize, Serialize};
 
-use crate::{
-    Board, BoardEnumerate, BoardIndex, BoardItem, BoardState, IsNoneOr, MarkTileResult, Player,
-    Region,
-};
+use crate::{Board, BoardIndex, BoardItem, BoardState, IsNoneOr, MarkTileResult, Player, Region};
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Game {
     pub board: Board<Region>,
     pub state: BoardState,
@@ -30,7 +26,7 @@ impl Game {
 
     pub fn is_region_enabled(&self, index: BoardIndex) -> bool {
         matches!(self.state, BoardState::InProgress)
-            && self.allowed_region_index().is_none_or(|i| i == index)
+            && self.allowed_region_index().my_is_none_or(|i| i == index)
     }
 
     pub fn mark_tile(
@@ -60,17 +56,3 @@ impl Game {
         result
     }
 }
-
-// pub enum PlayableRegionsIter {
-//     Single(Option<BoardIndex>),
-//     Iter(BoardEnumerate),
-// }
-//
-// impl PlayableRegionsIter {
-//     fn new(game: &Game) -> Self {
-//         let iter = game
-//             .board
-//             .enumerate()
-//             .filter(|(_, region)| region.is_markable());
-//     }
-// }

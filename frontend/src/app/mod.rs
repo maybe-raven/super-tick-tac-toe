@@ -1,6 +1,10 @@
 use self::{home::Home, how_to_play::HowToPlay};
-use crate::components::GameDiv;
+use crate::{
+    ai::mct::MakeMoveTask,
+    components::{AIGameDiv, LMGameDiv},
+};
 use yew::prelude::*;
+use yew_agent::oneshot::OneshotProvider;
 use yew_router::prelude::*;
 
 mod home;
@@ -29,8 +33,12 @@ fn switch(routes: Route) -> Html {
     match routes {
         Route::Home => html! { <Home /> },
         Route::HowToPlay => html! { <HowToPlay /> },
-        Route::LocalGame => html! { <GameDiv use_ai={false} /> },
-        Route::AiGame => html! { <GameDiv use_ai={true} /> },
+        Route::LocalGame => html! { <LMGameDiv /> },
+        Route::AiGame => html! {
+            <OneshotProvider<MakeMoveTask> path="/worker.js">
+                <AIGameDiv />
+            </OneshotProvider<MakeMoveTask>>
+        },
         // Route::CreateOnlineGame => html! { <GameDiv /> },
         // Route::JoinOnlineGame { .. } => html! { <GameDiv /> },
         // Route::NotFound => html! { <GameDiv /> },

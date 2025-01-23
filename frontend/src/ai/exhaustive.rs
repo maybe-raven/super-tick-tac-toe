@@ -1,10 +1,6 @@
-use std::{
-    collections::HashMap,
-    ops::{Add, AddAssign},
-};
+use std::collections::HashMap;
 
 use common::{BoardItem, BoardOutcome, BoardState, Game, MarkTileResult, Player};
-use gloo_console::log;
 
 pub fn make_move(game: &mut Game) {
     if !matches!(game.state, BoardState::InProgress) {
@@ -29,17 +25,13 @@ pub fn make_move(game: &mut Game) {
         {
             let mut game_clone = game.clone();
             game_clone.mark_tile(region_index, tile_index);
-            let score = simulate(&game_clone, &mut cache).win_ratio();
+            let score = simulate(&game_clone, &mut cache);
             all_moves.push((score, region_index, tile_index));
-            log!(format!(
-                "score: {score}; indices: {:?}",
-                (region_index, tile_index)
-            ));
         }
     }
     let (_, region_index, tile_index) = all_moves
         .into_iter()
-        .max_by(|(score_a, _, _), (score_b, _, _)| score_a.total_cmp(score_b))
+        .max_by_key(|&(score, _, _)| score)
         .expect("should have at least one possible move.");
     assert!(!matches!(
         game.mark_tile(region_index, tile_index),
@@ -47,42 +39,14 @@ pub fn make_move(game: &mut Game) {
     ));
 }
 
-#[derive(Clone, Copy, Default)]
-struct Score {
-    wins: usize,
-    nonwins: usize,
-}
-
-impl Score {
-    fn win_ratio(&self) -> f32 {
-        self.wins as f32 / self.nonwins as f32
-    }
-}
-
-impl Add for Score {
-    type Output = Self;
-    fn add(self, rhs: Self) -> Self::Output {
-        Score {
-            wins: self.wins + rhs.wins,
-            nonwins: self.nonwins + rhs.nonwins,
-        }
-    }
-}
-impl AddAssign for Score {
-    fn add_assign(&mut self, rhs: Self) {
-        self.wins += rhs.wins;
-        self.nonwins += rhs.nonwins;
-    }
-}
-
-fn simulate(game: &Game, cache: &mut HashMap<Game, Score>) -> Score {
+fn simulate(game: &Game, cache: &mut HashMap<Game, usize>) -> usize {
     assert!(matches!(game.state, BoardState::InProgress));
 
     if let Some(&score) = cache.get(game) {
         return score;
     }
 
-    let mut score = Score::default();
+    let mut score = 0;
     for (region_index, region) in game
         .board
         .enumerate()
@@ -102,9 +66,9 @@ fn simulate(game: &Game, cache: &mut HashMap<Game, Score>) -> Score {
                     score += sub_score;
                 },
                 MarkTileResult::OutcomeDecided(outcome) => match outcome {
-                    BoardOutcome::Draw |
-                    BoardOutcome::WonBy(Player::Circle) => score.nonwins += 1,
-                    BoardOutcome::WonBy(Player::Cross) => score.wins += 1,
+                    BoardOutcome::Draw => (),
+                    BoardOutcome::WonBy(Player::Circle) => score -= 1,
+                    BoardOutcome::WonBy(Player::Cross) => score += 1,
                 }
             }
         }

@@ -1,6 +1,8 @@
+use serde::{Deserialize, Serialize};
+
 use crate::{BoardItem, BoardOutcome, Player};
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Tile {
     #[default]
     Unmarked,
