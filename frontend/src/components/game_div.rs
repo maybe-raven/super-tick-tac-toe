@@ -1,7 +1,9 @@
 use crate::components::RegionDiv;
 use common::{
-    ai::mct::make_move, BoardIndex, BoardOutcome, BoardState, Game, MarkTileResult, Play, Player,
+    ai::mct::{make_move, Node},
+    BoardIndex, BoardOutcome, BoardState, Game, MarkTileResult, Play, Player,
 };
+use gloo_console::log;
 use tracing::instrument;
 use web_time::{Duration, Instant};
 use yew::{platform::spawn_local, prelude::*};
@@ -10,7 +12,18 @@ use yew_agent::oneshot::{oneshot, use_oneshot_runner};
 #[oneshot]
 pub fn AITask(game: Game) -> Play {
     let timeout = Instant::now() + Duration::from_secs_f32(5.0);
-    let should_terminate = move || Instant::now() > timeout;
+    let should_terminate = move |node: &Node| {
+        if Instant::now() > timeout {
+            log!(node.score() / node.n_visits() as f32);
+            log!(node
+                .children()
+                .map(|node| node.score() / node.n_visits() as f32)
+                .collect::<Vec<_>>());
+            true
+        } else {
+            false
+        }
+    };
 
     make_move(game, should_terminate)
 }
