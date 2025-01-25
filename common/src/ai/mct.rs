@@ -1,3 +1,4 @@
+use core::f32;
 use std::{
     cell::{Ref, RefCell},
     ops::ControlFlow,
@@ -7,13 +8,11 @@ use std::{
 use rand::{rngs::ThreadRng, seq::SliceRandom, thread_rng};
 use tracing::{debug, instrument};
 
-use crate::{
-    BoardIndex, BoardItem, BoardOutcome, BoardState, Game, MarkTileResult, Play, Player, Region,
-};
+use crate::{BoardIndex, BoardOutcome, BoardState, Game, MarkTileResult, Play, Player, Region};
 
 use super::random::GenerateMove;
 
-const EXPLORE_PARAM: f32 = 2.0;
+const EXPLORE_PARAM: f32 = f32::consts::SQRT_2;
 const SCORE_WIN: f32 = 1.0;
 const SCORE_DRAW: f32 = 0.0;
 const SCORE_LOSS: f32 = -1.0;
@@ -22,11 +21,11 @@ const SCORE_LOSS: f32 = -1.0;
 pub fn make_move(game: Game, should_terminate: impl Fn(&Node) -> bool) -> Play {
     assert!(matches!(game.state, BoardState::InProgress));
 
-    let mut rng = thread_rng();
     let root = Node::new_root();
+    let mut cursor = Cursor::new(Rc::clone(&root), game);
 
     loop {
-        Node::run(root.clone(), &mut rng, game.clone());
+        cursor.run();
         if should_terminate(&root.borrow()) {
             break;
         }
@@ -63,18 +62,21 @@ fn score_result(result: MarkTileResult) -> ControlFlow<f32, ()> {
     }
 }
 
-fn simulate(mut game: Game, rng: &mut ThreadRng) -> f32 {
-    loop {
-        let play = rng.generate_move(&game);
-        let result = game.mark_tile(play);
-        if let ControlFlow::Break(score) = score_result(result) {
-            return score;
-        }
-    }
-}
-
 type NodeRef = Rc<RefCell<Node>>;
 
+/// A node in a Monte Carlo Tree
+///
+/// Each node (aside from the *root* node) stores a play that can be made in the game from its
+/// parent state.
+/// Each node represents a game state that can be reached by applying the play to its parent state
+/// starting from the root.
+///
+/// A *terminal* node is a node that represents a game-over state.
+///
+/// A *leaf* node is a node with can be expanded (is not *terminal*) but hasn't been expanded yet.
+///
+/// Usage:
+/// Store the root node and navigate the tree with a [`Cursor`].
 #[derive(Clone, Debug)]
 pub struct Node {
     play: Option<Play>,
@@ -113,86 +115,6 @@ impl Node {
         };
         this.borrow_mut().children.push(Rc::new(RefCell::new(node)));
     }
-    #[instrument(skip(this, rng, game), fields(t=this.borrow().score, n=this.borrow().n_visits, n_children=this.borrow().children.len()))]
-    fn expand(this: &mut NodeRef, rng: &mut ThreadRng, game: &mut Game) -> ControlFlow<f32, ()> {
-        assert!(matches!(game.state, BoardState::InProgress));
-        assert! {
-            if let Some((region_index, tile_index)) = this.borrow().play {
-                !game.board[region_index].board[tile_index].is_markable()
-            } else {
-                true
-            }
-        };
-
-        let add_moves_for_region = |(region_index, region): (BoardIndex, &Region)| {
-            for (tile_index, _) in region.board.unmarked() {
-                let play = (region_index, tile_index);
-                Node::add_child(&*this, play);
-            }
-        };
-
-        if let Some(region_index) = game.allowed_region_index() {
-            add_moves_for_region((region_index, &game.board[region_index]));
-        } else {
-            game.board.unmarked().for_each(add_moves_for_region);
-        };
-
-        debug!(n_children = this.borrow().children.len());
-
-        this.borrow_mut().children.shuffle(rng);
-        let child = Rc::clone(this.borrow().children.first().expect("an in-progress game should always have at least one possible play, so this node should always have at least one child."));
-        let result =
-            game.mark_tile(child.borrow().play.expect(
-                "all nodes except the root should denote a play from the parent game state",
-            ));
-        let () = score_result(result)?;
-        *this = child;
-        ControlFlow::Continue(())
-    }
-    #[instrument(skip(this, _rng, game), fields(t=this.borrow().score, n=this.borrow().n_visits, n_children=this.borrow().children.len()))]
-    fn explore(this: &mut NodeRef, _rng: &mut ThreadRng, game: &mut Game) -> ControlFlow<f32, ()> {
-        assert!(matches!(game.state, BoardState::InProgress));
-
-        let mut invert_score = false;
-
-        loop {
-            let play = this.borrow().play;
-            if let Some(play) = play {
-                let result = game.mark_tile(play);
-                let () = score_result(result)?;
-            }
-
-            let lnn = (this.borrow().n_visits as f32).ln();
-            let child = this
-                .borrow()
-                .children
-                .iter()
-                .max_by(|node0: &&NodeRef, node1: &&NodeRef| {
-                    node0
-                        .borrow()
-                        .ucb1(lnn, invert_score)
-                        .total_cmp(&node1.borrow().ucb1(lnn, invert_score))
-                })
-                .map(Rc::clone);
-
-            if let Some(child) = child {
-                *this = child;
-            } else {
-                return ControlFlow::Continue(());
-            }
-
-            invert_score = !invert_score;
-        }
-    }
-    #[instrument(skip(self, rng, game), fields(t=self.score, n=self.n_visits, n_children=self.children.len()))]
-    fn rollout(&mut self, rng: &mut ThreadRng, game: Game) -> f32 {
-        assert_eq!(self.n_visits, 0);
-        assert_eq!(self.score, 0.0);
-
-        let score = simulate(game, rng);
-        debug!(score);
-        score
-    }
     fn ucb1(&self, lnn: f32, invert_score: bool) -> f32 {
         if self.n_visits == 0 {
             return f32::INFINITY;
@@ -202,34 +124,117 @@ impl Node {
         debug!(t = self.score, n = self.n_visits, lnn, ret);
         ret
     }
-    #[instrument(skip(this), fields(t=this.borrow().score, n=this.borrow().n_visits, n_children=this.borrow().children.len()))]
-    fn backpropagate(mut this: NodeRef, score_update: f32) {
-        loop {
-            this = {
-                let mut this = this.borrow_mut();
-                this.score += score_update;
-                this.n_visits += 1;
-                if let Some(parent) = &this.parent {
-                    parent
-                        .upgrade()
-                        .expect("no nodes should be dropped until the search is complete.")
-                } else {
-                    return;
-                }
-            };
+    fn update_score(&mut self, score_update: f32) {
+        self.score += score_update;
+        self.n_visits += 1;
+    }
+    fn find_best_child(&self, invert_score: bool) -> Option<NodeRef> {
+        let lnn = (self.n_visits as f32).ln();
+        self.children
+            .iter()
+            .max_by(|node0: &&NodeRef, node1: &&NodeRef| {
+                node0
+                    .borrow()
+                    .ucb1(lnn, invert_score)
+                    .total_cmp(&node1.borrow().ucb1(lnn, invert_score))
+            })
+            .map(Rc::clone)
+    }
+    fn should_rollout(&self) -> bool {
+        self.n_visits == 0 && self.play.is_some()
+    }
+}
+
+struct Cursor {
+    node: NodeRef,
+    original_game: Game,
+    game: Game,
+    rng: ThreadRng,
+}
+
+impl Cursor {
+    fn new(root_node: NodeRef, game: Game) -> Self {
+        Self {
+            node: root_node,
+            original_game: game.clone(),
+            game,
+            rng: thread_rng(),
         }
     }
-    #[instrument(skip(this,rng, game), fields(t=this.borrow().score, n=this.borrow().n_visits, n_children=this.borrow().children.len()))]
-    fn run(mut this: NodeRef, rng: &mut ThreadRng, mut game: Game) {
-        let score_update = || -> ControlFlow<f32, ()> {
-            let () = Self::explore(&mut this, rng, &mut game)?;
-            if this.borrow().play.is_none() || this.borrow().n_visits > 0 {
-                let () = Self::expand(&mut this, rng, &mut game)?;
-            }
-            ControlFlow::Break(this.borrow_mut().rollout(rng, game))
-        }()
+    fn visit(&mut self, child: NodeRef) -> ControlFlow<f32, ()> {
+        let play = child.borrow().play;
+        self.node = child;
+        if let Some(play) = play {
+            score_result(self.game.mark_tile(play))
+        } else {
+            ControlFlow::Continue(())
+        }
+    }
+    fn run(&mut self) {
+        let score_update = (|| -> ControlFlow<f32> {
+            let () = self.explore()?;
+            let () = self.expand()?;
+            ControlFlow::Break(self.rollout())
+        })()
         .break_value()
-        .expect("should only be break at this point.");
-        Self::backpropagate(this, score_update);
+        .expect("closure should only return the break variant");
+        self.backpropagate(score_update);
+    }
+    fn explore(&mut self) -> ControlFlow<f32> {
+        let mut invert_score = false;
+        loop {
+            let child = self.node.borrow().find_best_child(invert_score);
+            if let Some(child) = child {
+                let () = self.visit(child)?;
+            } else {
+                return ControlFlow::Continue(());
+            }
+            invert_score = !invert_score;
+        }
+    }
+    fn expand(&mut self) -> ControlFlow<f32> {
+        if self.node.borrow().should_rollout() {
+            return ControlFlow::Continue(());
+        }
+
+        let add_moves_for_region = |(region_index, region): (BoardIndex, &Region)| {
+            for (tile_index, _) in region.board.unmarked() {
+                let play = (region_index, tile_index);
+                Node::add_child(&self.node, play);
+            }
+        };
+
+        if let Some(region_index) = self.game.allowed_region_index() {
+            add_moves_for_region((region_index, &self.game.board[region_index]));
+        } else {
+            self.game.board.unmarked().for_each(add_moves_for_region);
+        };
+        self.node.borrow_mut().children.shuffle(&mut self.rng);
+
+        let child = Rc::clone(self.node.borrow().children.first().expect("an in-progress game should always have at least one possible play, so this node should always have at least one child."));
+        self.visit(child)
+    }
+    fn rollout(&mut self) -> f32 {
+        loop {
+            let play = self.rng.generate_move(&self.game);
+            let result = self.game.mark_tile(play);
+            if let ControlFlow::Break(score) = score_result(result) {
+                return score;
+            }
+        }
+    }
+    fn backpropagate(&mut self, score_update: f32) {
+        loop {
+            self.node.borrow_mut().update_score(score_update);
+            let parent = if let Some(parent) = &self.node.borrow().parent {
+                parent
+                    .upgrade()
+                    .expect("no nodes should be dropped until the search is complete.")
+            } else {
+                break;
+            };
+            self.node = parent;
+        }
+        self.game = self.original_game.clone();
     }
 }

@@ -14,10 +14,19 @@ pub fn AITask(game: Game) -> Play {
     let timeout = Instant::now() + Duration::from_secs_f32(5.0);
     let should_terminate = move |node: &Node| {
         if Instant::now() > timeout {
-            log!(node.score() / node.n_visits() as f32);
+            log!(format!(
+                "average score: {:.3} over {} simulations",
+                node.score() / node.n_visits() as f32,
+                node.n_visits()
+            ));
             log!(node
                 .children()
-                .map(|node| node.score() / node.n_visits() as f32)
+                .map(|node| format!(
+                    "{:.0} / {} = {:.3}",
+                    node.score(),
+                    node.n_visits(),
+                    node.score() / node.n_visits() as f32
+                ))
                 .collect::<Vec<_>>());
             true
         } else {

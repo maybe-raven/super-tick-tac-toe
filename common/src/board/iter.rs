@@ -32,7 +32,7 @@ impl<'a, T> Iterator for BoardEnumerate<'a, T> {
     }
 }
 
-impl<'a, T> ExactSizeIterator for BoardEnumerate<'a, T> {}
+impl<T> ExactSizeIterator for BoardEnumerate<'_, T> {}
 
 pub struct Unmarked<'a, T> {
     iter: BoardEnumerate<'a, T>,
