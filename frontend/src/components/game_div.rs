@@ -13,7 +13,7 @@ use yew_agent::oneshot::{oneshot, use_oneshot_runner};
 
 #[oneshot]
 pub fn AITask(game: Game) -> Play {
-    let timeout = Instant::now() + Duration::from_secs_f32(5.0);
+    let timeout = Instant::now() + Duration::from_secs_f32(1.0);
     let should_terminate = move |node: &Node| {
         if Instant::now() > timeout {
             log!(format!(
@@ -110,13 +110,27 @@ pub(crate) fn ai_game_div() -> Html {
             })
         };
 
-        Some(html! {
+        html! {
             <div class="flex flex-col mx-auto max-w-md text-center gap-3 items-center">
                 <button class="font-semibold text-sm bg-cyan-500 rounded-full shadow-sm px-4 py-2 max-w-fit" onclick={switch_callback}>{"Make AI Go First"}</button>
             </div>
-        })
+        }
     } else {
-        None
+        let restart_callback = {
+            let state = game.clone();
+
+            Callback::from(move |_| {
+                allow_switch.set(true);
+                *player.borrow_mut() = Player::default();
+                state.set(Game::new());
+            })
+        };
+
+        html! {
+            <div class="flex flex-col mx-auto max-w-md text-center gap-3 items-center">
+                <button class="font-semibold text-sm bg-cyan-500 rounded-full shadow-sm px-4 py-2 max-w-fit" onclick={restart_callback}>{"Restart"}</button>
+            </div>
+        }
     };
 
     render_game_div(game, callback, game_state_text, switch_button)
@@ -149,14 +163,27 @@ pub(crate) fn lm_game_div() -> Html {
         }
     };
 
-    render_game_div(game, callback, game_state_text, None)
+    let restart_callback = {
+        let state = game.clone();
+        Callback::from(move |_| {
+            state.set(Game::new());
+        })
+    };
+
+    let restart_button = html! {
+        <div class="flex flex-col mx-auto max-w-md text-center gap-3 items-center">
+            <button class="font-semibold text-sm bg-cyan-500 rounded-full shadow-sm px-4 py-2 max-w-fit" onclick={restart_callback}>{"Restart"}</button>
+        </div>
+    };
+
+    render_game_div(game, callback, game_state_text, restart_button)
 }
 
 fn render_game_div(
     game: UseStateHandle<Game>,
     callback: Callback<(BoardIndex, BoardIndex), ()>,
     game_state_text: String,
-    extra: Option<VNode>,
+    extra: VNode,
 ) -> Html {
     let children: Vec<Html> = game
         .board
