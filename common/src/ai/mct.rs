@@ -14,8 +14,8 @@ use super::random::GenerateMove;
 
 const EXPLORE_PARAM: f32 = f32::consts::SQRT_2;
 const SCORE_WIN: f32 = 1.0;
-const SCORE_DRAW: f32 = 0.0;
-const SCORE_LOSS: f32 = -1.0;
+const SCORE_DRAW: f32 = 0.5;
+const SCORE_LOSS: f32 = 0.0;
 
 #[instrument(skip(should_terminate, game))]
 pub fn make_move(game: Game, should_terminate: impl Fn(&Node) -> bool) -> Play {
@@ -43,23 +43,6 @@ pub fn make_move(game: Game, should_terminate: impl Fn(&Node) -> bool) -> Play {
         .play
         .expect("all nodes except the root should denote a play from the parent game state");
     play
-}
-
-fn score_result(result: MarkTileResult) -> ControlFlow<f32, ()> {
-    match result {
-        MarkTileResult::NoChange => unreachable!(
-            "generated move should always be valid and should never result in NoChange"
-        ),
-        MarkTileResult::TileMarked => ControlFlow::Continue(()),
-        MarkTileResult::OutcomeDecided(outcome) => {
-            let score = match outcome {
-                BoardOutcome::Draw => SCORE_DRAW,
-                BoardOutcome::WonBy(Player::Cross) => SCORE_WIN,
-                BoardOutcome::WonBy(Player::Circle) => SCORE_LOSS,
-            };
-            ControlFlow::Break(score)
-        }
-    }
 }
 
 type NodeRef = Rc<RefCell<Node>>;
@@ -115,12 +98,12 @@ impl Node {
         };
         this.borrow_mut().children.push(Rc::new(RefCell::new(node)));
     }
-    fn ucb1(&self, lnn: f32, invert_score: bool) -> f32 {
+    fn ucb1(&self, lnn: f32) -> f32 {
         if self.n_visits == 0 {
             return f32::INFINITY;
         }
-        let ret = if invert_score { -1.0 } else { 1.0 } * self.score / self.n_visits as f32
-            + EXPLORE_PARAM * (lnn / self.n_visits as f32).sqrt();
+        let ret =
+            self.score / self.n_visits as f32 + EXPLORE_PARAM * (lnn / self.n_visits as f32).sqrt();
         debug!(t = self.score, n = self.n_visits, lnn, ret);
         ret
     }
@@ -128,15 +111,15 @@ impl Node {
         self.score += score_update;
         self.n_visits += 1;
     }
-    fn find_best_child(&self, invert_score: bool) -> Option<NodeRef> {
+    fn find_best_child(&self) -> Option<NodeRef> {
         let lnn = (self.n_visits as f32).ln();
         self.children
             .iter()
             .max_by(|node0: &&NodeRef, node1: &&NodeRef| {
                 node0
                     .borrow()
-                    .ucb1(lnn, invert_score)
-                    .total_cmp(&node1.borrow().ucb1(lnn, invert_score))
+                    .ucb1(lnn)
+                    .total_cmp(&node1.borrow().ucb1(lnn))
             })
             .map(Rc::clone)
     }
@@ -147,6 +130,7 @@ impl Node {
 
 struct Cursor {
     node: NodeRef,
+    player: Player,
     original_game: Game,
     game: Game,
     rng: ThreadRng,
@@ -156,43 +140,52 @@ impl Cursor {
     fn new(root_node: NodeRef, game: Game) -> Self {
         Self {
             node: root_node,
+            player: game.current_player,
             original_game: game.clone(),
             game,
             rng: thread_rng(),
         }
     }
-    fn visit(&mut self, child: NodeRef) -> ControlFlow<f32, ()> {
+    fn mark_tile(&mut self, play: Play) -> ControlFlow<BoardOutcome> {
+        match self.game.mark_tile(play) {
+            MarkTileResult::NoChange => unreachable!(
+                "generated move should always be valid and should never result in NoChange"
+            ),
+            MarkTileResult::TileMarked => ControlFlow::Continue(()),
+            MarkTileResult::OutcomeDecided(outcome) => ControlFlow::Break(outcome),
+        }
+    }
+    fn visit(&mut self, child: NodeRef) -> ControlFlow<BoardOutcome> {
         let play = child.borrow().play;
         self.node = child;
         if let Some(play) = play {
-            score_result(self.game.mark_tile(play))
+            self.player = self.player.other();
+            self.mark_tile(play)
         } else {
             ControlFlow::Continue(())
         }
     }
     fn run(&mut self) {
-        let score_update = (|| -> ControlFlow<f32> {
+        let outcome = (|| -> ControlFlow<BoardOutcome> {
             let () = self.explore()?;
             let () = self.expand()?;
             ControlFlow::Break(self.rollout())
         })()
         .break_value()
         .expect("closure should only return the break variant");
-        self.backpropagate(score_update);
+        self.backpropagate(outcome);
     }
-    fn explore(&mut self) -> ControlFlow<f32> {
-        let mut invert_score = false;
+    fn explore(&mut self) -> ControlFlow<BoardOutcome> {
         loop {
-            let child = self.node.borrow().find_best_child(invert_score);
+            let child = self.node.borrow().find_best_child();
             if let Some(child) = child {
                 let () = self.visit(child)?;
             } else {
                 return ControlFlow::Continue(());
             }
-            invert_score = !invert_score;
         }
     }
-    fn expand(&mut self) -> ControlFlow<f32> {
+    fn expand(&mut self) -> ControlFlow<BoardOutcome> {
         if self.node.borrow().should_rollout() {
             return ControlFlow::Continue(());
         }
@@ -214,18 +207,28 @@ impl Cursor {
         let child = Rc::clone(self.node.borrow().children.first().expect("an in-progress game should always have at least one possible play, so this node should always have at least one child."));
         self.visit(child)
     }
-    fn rollout(&mut self) -> f32 {
+    fn rollout(&mut self) -> BoardOutcome {
         loop {
             let play = self.rng.generate_move(&self.game);
-            let result = self.game.mark_tile(play);
-            if let ControlFlow::Break(score) = score_result(result) {
-                return score;
+            if let ControlFlow::Break(outcome) = self.mark_tile(play) {
+                return outcome;
             }
         }
     }
-    fn backpropagate(&mut self, score_update: f32) {
+    fn backpropagate(&mut self, outcome: BoardOutcome) {
         loop {
+            let score_update = match outcome {
+                BoardOutcome::Draw => SCORE_DRAW,
+                BoardOutcome::WonBy(winner) => {
+                    if winner == self.player {
+                        SCORE_LOSS
+                    } else {
+                        SCORE_WIN
+                    }
+                }
+            };
             self.node.borrow_mut().update_score(score_update);
+            self.player = self.player.other();
             let parent = if let Some(parent) = &self.node.borrow().parent {
                 parent
                     .upgrade()
@@ -235,6 +238,10 @@ impl Cursor {
             };
             self.node = parent;
         }
+        self.reset();
+    }
+    fn reset(&mut self) {
         self.game = self.original_game.clone();
+        self.player = self.game.current_player;
     }
 }

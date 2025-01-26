@@ -16,7 +16,7 @@ pub fn AITask(game: Game) -> Play {
         if Instant::now() > timeout {
             log!(format!(
                 "average score: {:.3} over {} simulations",
-                node.score() / node.n_visits() as f32,
+                1.0 - (node.score() / node.n_visits() as f32),
                 node.n_visits()
             ));
             log!(node
