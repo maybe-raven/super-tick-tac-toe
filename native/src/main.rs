@@ -27,11 +27,11 @@ fn main() {
         let start_time = Instant::now();
         let play = ai::mct::make_move(game.clone(), |node| {
             if node.n_visits() > 20000 {
-                println!("score average: {}", node.score() / node.n_visits() as f32);
+                println!("score average: {}", node.average_score());
                 println!(
                     "{:?}",
                     node.children()
-                        .map(|child| child.score() / child.n_visits() as f32)
+                        .map(|child| child.average_score())
                         .collect::<Vec<_>>()
                 );
                 true
