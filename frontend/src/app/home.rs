@@ -18,9 +18,9 @@ pub fn start() -> Html {
     html! {
         <div class="flex flex-col mx-auto mt-12 max-w-md text-center gap-3 items-center">
             <h1>{"Super Tic-Tac-Toe"}</h1>
-            <button class="font-semibold text-sm bg-cyan-500 rounded-full shadow-sm px-4 py-2 max-w-fit" onclick={how_to_play_onclick}>{"How to Play"}</button>
-            <button class="font-semibold text-sm bg-cyan-500 rounded-full shadow-sm px-4 py-2 max-w-fit" onclick={local_game_onclick}>{"Play Local Multiplayer"}</button>
-            <button class="font-semibold text-sm bg-cyan-500 rounded-full shadow-sm px-4 py-2 max-w-fit" onclick={ai_game_onclick}>{"Play Against AI"}</button>
+            <button class="font-semibold text-sm bg-primary rounded-full shadow-sm px-4 py-2 max-w-fit" onclick={how_to_play_onclick}>{"How to Play"}</button>
+            <button class="font-semibold text-sm bg-primary rounded-full shadow-sm px-4 py-2 max-w-fit" onclick={local_game_onclick}>{"Play Local Multiplayer"}</button>
+            <button class="font-semibold text-sm bg-primary rounded-full shadow-sm px-4 py-2 max-w-fit" onclick={ai_game_onclick}>{"Play Against AI"}</button>
         </div>
     }
 }

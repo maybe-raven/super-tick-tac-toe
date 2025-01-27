@@ -122,7 +122,7 @@ pub(crate) fn ai_game_div() -> Html {
 
         html! {
             <div class="flex flex-col mx-auto max-w-md text-center gap-3 items-center">
-                <button class="font-semibold text-sm bg-cyan-500 rounded-full shadow-sm px-4 py-2 max-w-fit" onclick={switch_callback}>{"Make AI Go First"}</button>
+                <button class="font-semibold text-sm bg-primary rounded-full shadow-sm px-4 py-2 max-w-fit" onclick={switch_callback}>{"Make AI Go First"}</button>
             </div>
         }
     } else {
@@ -139,7 +139,7 @@ pub(crate) fn ai_game_div() -> Html {
 
         html! {
             <div class="flex flex-col mx-auto max-w-md text-center gap-3 items-center">
-                <button class="font-semibold text-sm bg-cyan-500 rounded-full shadow-sm px-4 py-2 max-w-fit" onclick={restart_callback}>{"Restart"}</button>
+                <button class="font-semibold text-sm bg-primary rounded-full shadow-sm px-4 py-2 max-w-fit" onclick={restart_callback}>{"Restart"}</button>
             </div>
         }
     };
@@ -183,7 +183,7 @@ pub(crate) fn lm_game_div() -> Html {
 
     let restart_button = html! {
         <div class="flex flex-col mx-auto max-w-md text-center gap-3 items-center">
-            <button class="font-semibold text-sm bg-cyan-500 rounded-full shadow-sm px-4 py-2 max-w-fit" onclick={restart_callback}>{"Restart"}</button>
+            <button class="font-semibold text-sm bg-primary rounded-full shadow-sm px-4 py-2 max-w-fit" onclick={restart_callback}>{"Restart"}</button>
         </div>
     };
 

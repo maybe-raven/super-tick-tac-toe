@@ -14,11 +14,7 @@ pub(crate) fn tile_div(props: &Props) -> Html {
     let enabled = props.onclick.is_some();
     let css = classes!(
         "aspect-square",
-        if enabled {
-            "bg-gray-800"
-        } else {
-            "bg-neutral-600"
-        },
+        if enabled { "bg-base" } else { "bg-fore" },
         enabled.then_some("hover:bg-white"),
     );
 

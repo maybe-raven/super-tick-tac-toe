@@ -45,9 +45,9 @@ pub(crate) fn region_div(props: &Props) -> Html {
     let css = classes!(
         "p-3",
         if props.callback.is_some() && props.region.is_markable() {
-            "bg-gray-800"
+            "bg-base"
         } else {
-            "bg-neutral-600"
+            "bg-fore"
         }
     );
 
