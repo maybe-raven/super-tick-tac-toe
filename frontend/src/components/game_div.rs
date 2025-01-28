@@ -10,6 +10,7 @@ use tracing::instrument;
 use web_time::{Duration, Instant};
 use yew::{platform::spawn_local, prelude::*, virtual_dom::VNode};
 use yew_agent::oneshot::{oneshot, use_oneshot_runner};
+use yew_router::hooks::use_navigator;
 
 #[oneshot]
 pub fn AITask(game: Game) -> Play {
@@ -47,6 +48,8 @@ pub(crate) fn ai_game_div() -> Html {
     let counter = use_mut_ref(usize::default);
     let player = use_mut_ref(Player::default);
     let ai_task = use_oneshot_runner::<AITask>();
+    let navigator = use_navigator().unwrap();
+    let goback = Callback::from(move |_| navigator.back());
 
     let callback = {
         let state = game.clone();
@@ -123,6 +126,7 @@ pub(crate) fn ai_game_div() -> Html {
         html! {
             <div class="flex flex-col mx-auto max-w-md text-center gap-3 items-center">
                 <button class="font-semibold text-sm bg-primary rounded-full shadow-sm px-4 py-2 max-w-fit" onclick={switch_callback}>{"Make AI Go First"}</button>
+                <button class="font-semibold text-sm bg-primary rounded-full shadow-sm px-4 py-2 max-w-fit" onclick={goback}>{"Back"}</button>
             </div>
         }
     } else {
@@ -140,6 +144,7 @@ pub(crate) fn ai_game_div() -> Html {
         html! {
             <div class="flex flex-col mx-auto max-w-md text-center gap-3 items-center">
                 <button class="font-semibold text-sm bg-primary rounded-full shadow-sm px-4 py-2 max-w-fit" onclick={restart_callback}>{"Restart"}</button>
+                <button class="font-semibold text-sm bg-primary rounded-full shadow-sm px-4 py-2 max-w-fit" onclick={goback}>{"Back"}</button>
             </div>
         }
     };
@@ -181,9 +186,13 @@ pub(crate) fn lm_game_div() -> Html {
         })
     };
 
+    let navigator = use_navigator().unwrap();
+    let goback = Callback::from(move |_| navigator.back());
+
     let restart_button = html! {
         <div class="flex flex-col mx-auto max-w-md text-center gap-3 items-center">
             <button class="font-semibold text-sm bg-primary rounded-full shadow-sm px-4 py-2 max-w-fit" onclick={restart_callback}>{"Restart"}</button>
+            <button class="font-semibold text-sm bg-primary rounded-full shadow-sm px-4 py-2 max-w-fit" onclick={goback}>{"Back"}</button>
         </div>
     };
 
