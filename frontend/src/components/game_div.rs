@@ -124,9 +124,9 @@ pub(crate) fn ai_game_div() -> Html {
         };
 
         html! {
-            <div class="flex flex-col mx-auto max-w-md text-center gap-3 items-center">
-                <button class="font-semibold text-sm bg-primary rounded-full shadow-sm px-4 py-2 max-w-fit" onclick={switch_callback}>{"Make AI Go First"}</button>
-                <button class="font-semibold text-sm bg-primary rounded-full shadow-sm px-4 py-2 max-w-fit" onclick={goback}>{"Back"}</button>
+            <div class="flex flex-col mx-auto max-w-md text-center gap-3 items-center bg-base">
+                <button class="font-semibold text-sm bg-primary rounded-full shadow-sm px-4 py-2 max-w-fit bg-base" onclick={switch_callback}>{"Make AI Go First"}</button>
+                <button class="font-semibold text-sm bg-primary rounded-full shadow-sm px-4 py-2 max-w-fit bg-base" onclick={goback}>{"Back"}</button>
             </div>
         }
     } else {
@@ -142,9 +142,9 @@ pub(crate) fn ai_game_div() -> Html {
         };
 
         html! {
-            <div class="flex flex-col mx-auto max-w-md text-center gap-3 items-center">
-                <button class="font-semibold text-sm bg-primary rounded-full shadow-sm px-4 py-2 max-w-fit" onclick={restart_callback}>{"Restart"}</button>
-                <button class="font-semibold text-sm bg-primary rounded-full shadow-sm px-4 py-2 max-w-fit" onclick={goback}>{"Back"}</button>
+            <div class="flex flex-col mx-auto max-w-md text-center gap-3 items-center bg-base">
+                <button class="font-semibold text-sm bg-primary rounded-full shadow-sm px-4 py-2 max-w-fit bg-base" onclick={restart_callback}>{"Restart"}</button>
+                <button class="font-semibold text-sm bg-primary rounded-full shadow-sm px-4 py-2 max-w-fit bg-base" onclick={goback}>{"Back"}</button>
             </div>
         }
     };
@@ -190,9 +190,9 @@ pub(crate) fn lm_game_div() -> Html {
     let goback = Callback::from(move |_| navigator.back());
 
     let restart_button = html! {
-        <div class="flex flex-col mx-auto max-w-md text-center gap-3 items-center">
-            <button class="font-semibold text-sm bg-primary rounded-full shadow-sm px-4 py-2 max-w-fit" onclick={restart_callback}>{"Restart"}</button>
-            <button class="font-semibold text-sm bg-primary rounded-full shadow-sm px-4 py-2 max-w-fit" onclick={goback}>{"Back"}</button>
+        <div class="flex flex-col mx-auto max-w-md text-center gap-3 items-center bg-base">
+            <button class="font-semibold text-sm bg-primary rounded-full shadow-sm px-4 py-2 max-w-fit bg-base" onclick={restart_callback}>{"Restart"}</button>
+            <button class="font-semibold text-sm bg-primary rounded-full shadow-sm px-4 py-2 max-w-fit bg-base" onclick={goback}>{"Back"}</button>
         </div>
     };
 
@@ -218,11 +218,11 @@ fn render_game_div(
         .collect();
 
     html! {
-        <div class="flex flex-col mx-auto mt-12 max-w-lg text-center gap-4">
-            <div class="grid grid-cols-3 grid-rows-3 aspect-square bg-white gap-0.5">
+        <div class="flex flex-col mx-auto mt-12 max-w-lg text-center gap-4 bg-base">
+            <div class="grid grid-cols-3 grid-rows-3 aspect-square bg-white gap-0.5 bg-base">
                 { children }
             </div>
-            <p>{ game_state_text }</p>
+            <p class="bg-base">{ game_state_text }</p>
             { extra }
         </div>
     }

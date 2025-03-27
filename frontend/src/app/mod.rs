@@ -32,7 +32,7 @@ fn switch(routes: Route) -> Html {
         Route::HowToPlay => html! { <HowToPlay /> },
         Route::LocalGame => html! { <LMGameDiv /> },
         Route::AiGame => html! {
-            <OneshotProvider<AITask> path="/worker.js">
+            <OneshotProvider<AITask> path="./worker.js">
                 <AIGameDiv />
             </OneshotProvider<AITask>>
         },
@@ -45,8 +45,8 @@ fn switch(routes: Route) -> Html {
 #[function_component(App)]
 pub fn app() -> Html {
     html! {
-        <BrowserRouter>
+        <HashRouter>
             <Switch<Route> render={switch} />
-        </BrowserRouter>
+        </HashRouter>
     }
 }
