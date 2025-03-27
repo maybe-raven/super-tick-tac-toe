@@ -1,7 +1,0 @@
-[workspace]
-members = [
-    "common",
-    "frontend",
-    "backend",
-    "native"
-]
